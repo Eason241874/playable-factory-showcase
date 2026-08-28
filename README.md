@@ -30,6 +30,15 @@ Parse Agent ──► Plan Agent ──► Component Agent (RAG)
 - 可观测性：每个节点产生可序列化的 `trace`，记录状态、修复轮次和耗时。
 - 换皮 Agent：从内嵌 HTML 中提取、分类、按用户要求替换素材，再重新封装成单文件 H5。
 
+## Screenshots
+
+These screenshots are captured from real generated H5 outputs in mock mode.
+
+| Drag Merge | Stack Build |
+| --- | --- |
+| ![Drag merge start](docs/screenshots/drag_merge_start.png) | ![Stack build start](docs/screenshots/stack_build_start.png) |
+| ![Drag merge gameplay](docs/screenshots/drag_merge_play.png) | ![Stack build gameplay](docs/screenshots/stack_build_play.png) |
+
 ## Quick start
 
 ```powershell
