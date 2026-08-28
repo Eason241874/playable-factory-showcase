@@ -2,16 +2,7 @@
 
 从玩法 brief 到单文件 H5 的试玩广告生产管线。它把玩法规划、组件复用、素材装配、QA 检查和换皮回嵌放进同一条可复现流程，适合用来展示 Playable Ads 的工程化制作能力。
 
-> 公开仓库只保留可展示的 demo、流程代码、测试和截图；实际渠道成品、音视频和投放素材包未放入仓库。Demo 美术使用 Kenney CC0 素材，来源见 [docs/asset_sources.md](docs/asset_sources.md)。
-
-## Screenshots
-
-Screenshots below are captured from generated H5 files in local mock mode.
-
-| Drag Merge | Stack Build |
-| --- | --- |
-| ![Drag merge start](docs/screenshots/drag_merge_start.png) | ![Stack build start](docs/screenshots/stack_build_start.png) |
-| ![Drag merge gameplay](docs/screenshots/drag_merge_play.png) | ![Stack build gameplay](docs/screenshots/stack_build_play.png) |
+> 公开仓库只保留可展示的 demo、流程代码和测试；实际渠道成品、音视频和投放素材包未放入仓库。Demo 美术使用 Kenney CC0 素材，来源见 [docs/asset_sources.md](docs/asset_sources.md)。
 
 ## Highlights
 
@@ -31,7 +22,7 @@ Parse Agent ──► Plan Agent ──► Component Agent (RAG)
 ```
 
 - 状态图编排：显式状态、条件路由和 QA 回炉环，能看清每一步为什么发生。
-- 离线可复现：默认 `mock` 模式无需网络，适合面试展示、CI 和作品集截图。
+- 离线可复现：默认 `mock` 模式无需网络，适合面试展示、CI 和作品集演示。
 - 组件召回：本地向量召回叠加玩法亲和度、冲突规则和历史先验，避免把整库硬塞进生成阶段。
 - 单文件交付：玩法模板、公开素材包、组件片段和投放壳最终装配成一个 HTML。
 - 质量门禁：检查结构、CTA、MRAID 降级链、模板残留、包体大小和动态执行风险。

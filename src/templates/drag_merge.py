@@ -289,7 +289,7 @@ function draw(){
 
   // 绘制所有物品
   items.forEach(function(o){
-    // 入场/点击缩放动画：不累加到对象尺寸，避免截图中素材失控放大
+    // 入场/点击缩放动画：不累加到对象尺寸，避免素材失控放大
     if (o.anim > 0) o.anim = Math.max(0, o.anim - 0.05);
     if (o.pop) {
       o.pop *= 0.82;
