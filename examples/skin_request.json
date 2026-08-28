@@ -1,0 +1,21 @@
+{
+  "replace": [
+    {
+      "match": {
+        "role": "background"
+      },
+      "with": "replacements/new_scene.webp",
+      "limit": 1,
+      "reason": "replace the main scene art for a new ad theme"
+    },
+    {
+      "match": {
+        "category": "ui"
+      },
+      "with": "replacements/new_cta.png",
+      "limit": 1,
+      "reason": "replace one UI or CTA asset"
+    }
+  ],
+  "replace_edited_files": true
+}

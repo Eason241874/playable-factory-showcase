@@ -28,6 +28,7 @@ Parse Agent ──► Plan Agent ──► Component Agent (RAG)
 - 质量门禁：结构、CTA、MRAID 降级链、占位符、包体等检查，拒绝使用动态 `eval` 规则。
 - Human-in-the-Loop：QA 通过后在 `human_review` 节点暂停，人工确认后才落盘。
 - 可观测性：每个节点产生可序列化的 `trace`，记录状态、修复轮次和耗时。
+- 换皮 Agent：从内嵌 HTML 中提取、分类、按用户要求替换素材，再重新封装成单文件 H5。
 
 ## Quick start
 
@@ -47,6 +48,17 @@ python main.py --mock --no-review --brief examples/brief_merge.txt --out outputs
 ```powershell
 python tests/self_test.py
 ```
+
+换皮 Agent 示例：
+
+```powershell
+python tools/skin_swap.py extract path\to\playable.html --out-dir skin\demo
+python tools/skin_swap.py plan skin\demo --request examples\skin_request.json
+python tools/skin_swap.py embed skin\demo path\to\playable.html --out outputs\demo_skinned.html
+```
+
+它会生成 `manifest.json`、`asset_catalog.json`、`replacement_plan.json` 和
+`.skin_report.json`，用于展示每个素材的分类、替换原因、引用次数和回嵌后的审计结果。
 
 Live 模式只从环境变量读取凭据：
 
@@ -76,6 +88,8 @@ tools/skin_swap.py          # 内嵌 data URI 素材提取/灌回工具
 tools/audit_html.py         # 独立静态交付审计器
 tests/self_test.py          # 离线节点测试 + 端到端 smoke test
 ```
+
+换皮流水线的详细设计见 [docs/skin_swap_agent.md](docs/skin_swap_agent.md)。
 
 ## Design decisions
 
