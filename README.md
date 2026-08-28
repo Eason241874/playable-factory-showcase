@@ -87,13 +87,7 @@ tests/self_test.py          # 离线节点测试 + 端到端 smoke test
 
 规划 Agent 先选择组件名，Component Agent 再用语义召回、玩法亲和度和冲突规则完成排序。Codegen 只接收命中的组件片段，而不是把整个知识库塞进 prompt；这样组件复用边界清晰，也方便解释每次命中原因。
 
-### 为什么保留 mock 模式
 
-面试演示、CI 和离线评审不应该依赖 API 配额或网络状态。`mock` 分支使用确定性规则与模板，但仍完整经过 LangGraph、RAG、渲染和 QA；live 模式只替换 LLM 接口，不改变管线结构。
-
-### 如何处理公开仓库的安全边界
-
-公开版只保留工程代码、知识库和小型 brief。投放 HTML、原始图片/视频、浏览器 QA 截图、凭据和本地配置均被忽略或排除。`--live` 的 API key 只从环境变量读取。
 
 ## Extending the system
 
