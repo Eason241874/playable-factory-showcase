@@ -1,0 +1,385 @@
+# =========================================================
+# 试玩广告高转化组件库（RAG 知识源）
+#
+# 维护约定（改库之前先读这段）：
+# 1. components / mechanics / assets 三个段落的条目都会进检索语料，
+#    tags 和 when/description 写得好不好直接决定召回质量，别偷懒。
+# 2. ctr / ipm 是投放侧回传的历史均值（demo 数据为模拟值），
+#    检索重排会拿它当先验，量级别乱填。
+# 3. 条目里的 params 是给代码生成 Agent 看的"可配参数说明书"，
+#    codegen 会把 default 值灌进产物，desc 会进 LLM 的 prompt。
+# 4. 新增玩法流程：src/templates/ 加模板 -> 这里注册 mechanics ->
+#    （有专用素材）assets 里登记 -> examples/ 补一个 brief。
+# =========================================================
+
+# ---------------------------------------------------------
+# 增强组件：挂在玩法骨架上、不影响核心循环的体验增强件
+# ---------------------------------------------------------
+components:
+  - name: countdown
+    display_name: 超时倒计时条
+    tags: [倒计时, 紧迫感, 超时失败, 通用, 时间压力]
+    when: 需要制造时间压力、超时判负时启用。数值小于 20s 时视觉上加急促呼吸动画，最后 5 秒会抖屏提醒
+    scenario: 几乎所有限时玩法；对"目标感弱、容易闲逛"的探索类玩法收益最大
+    ctr: 0.142
+    install_rate: 0.031
+    fatigue: 低
+    compatible_mechanics: [drag_merge, stack_build, sort_puzzle, tomb_explore, balloon_rescue]
+    conflicts: []
+    params:
+      countdown_seconds: { type: int, default: 30, desc: 倒计时时长（秒），超时判负 }
+
+  - name: progress_bar
+    display_name: 通关进度条
+    tags: [进度, 目标感, 收集类, 消除类, 多轮]
+    when: 玩法为多轮/多目标（合成 N 次、收集 N 件、合成到第 N 级）时启用，让玩家随时知道"还差多少"
+    scenario: 目标数 >= 3 的收集/合成玩法必带；单目标玩法反而多余
+    ctr: 0.118
+    install_rate: 0.024
+    fatigue: 低
+    compatible_mechanics: [drag_merge, sort_puzzle, stack_build, tomb_explore]
+    conflicts: []
+    params: {}
+
+  - name: hint_hand
+    display_name: 新手引导手
+    tags: [引导, 新手, 降低流失, 通用, 前3秒]
+    when: 交互目标不直观、需要点明首次操作时启用；首次有效操作后自动消失，绝不留残影干扰
+    scenario: 非"点屏幕中央"类的玩法默认都带，拖拽/滑动类收益最明显
+    ctr: 0.156
+    install_rate: 0.033
+    fatigue: 低
+    compatible_mechanics: [drag_merge, stack_build, sort_puzzle, tomb_explore, balloon_rescue]
+    conflicts: []
+    params: {}
+
+  - name: coin_counter
+    display_name: 金币计数器
+    tags: [金币, 数值成长, 收集, 奖励, 反馈]
+    when: 玩法内存在可拾取奖励物（金币/宝石/战利品）时启用；拾取瞬间做数值滚动 + 飞行动效，强化"赚到了"的多巴胺反馈
+    scenario: 探索、跑酷、消除类玩法；与 tomb_explore 的宝藏主题天然契合
+    ctr: 0.131
+    install_rate: 0.028
+    fatigue: 低
+    compatible_mechanics: [tomb_explore, drag_merge]
+    conflicts: []
+    params:
+      coin_target: { type: int, default: 100, desc: 计数器上展示的目标金币数，只做目标感展示 }
+
+  - name: combo_text
+    display_name: 连击飘字
+    tags: [连击, 爽感, 飘字, 反馈, 节奏]
+    when: 玩家可能短时间内连续得分时启用；2 连击起步、逐次放大字号，5 连击后追加震屏
+    scenario: 反应类、连续操作类玩法；对"一顿操作没反馈"的玩法救亡效果最好
+    ctr: 0.124
+    install_rate: 0.026
+    fatigue: 中
+    compatible_mechanics: [stack_build, tomb_explore, drag_merge]
+    conflicts: []
+    params:
+      combo_window_ms: { type: int, default: 1800, desc: 两次得分间隔在该毫秒数内计为连击 }
+
+  - name: screen_shake
+    display_name: 打击震屏
+    tags: [震屏, 打击感, 反馈, 惩罚, 节奏]
+    when: 发生关键事件（失误/中奖/阶段切换）时给全屏一次短促位移，幅度 6-10px、时长 200ms 以内，避免晕眩
+    scenario: 有失败惩罚的玩法必带；纯休闲治愈系玩法慎用
+    ctr: 0.097
+    install_rate: 0.019
+    fatigue: 中
+    compatible_mechanics: [stack_build, tomb_explore, balloon_rescue]
+    conflicts: []
+    params:
+      shake_px: { type: int, default: 8, desc: 震屏幅度（px） }
+
+  - name: task_goal
+    display_name: 目标横幅
+    tags: [任务, 目标, 收集, 指引, 常驻]
+    when: 胜利条件由"多个子目标"构成时启用（如 3 宝箱 + 若干金币），常驻顶部实时勾选完成情况
+    scenario: 复合目标玩法；与 progress_bar 二选一，别同时上两个进度向组件
+    ctr: 0.112
+    install_rate: 0.023
+    fatigue: 低
+    compatible_mechanics: [tomb_explore, drag_merge, sort_puzzle]
+    conflicts: [progress_bar]
+    params: {}
+
+# ---------------------------------------------------------
+# 玩法模板：决定核心循环的骨架，codegen 按 name 加载
+# src/templates/{name}.py
+# ---------------------------------------------------------
+mechanics:
+  - name: drag_merge
+    display_name: 拖拽合成
+    tags: [合成, 拖拽, 二合, merge, 装扮, 经营, 家具]
+    description: 拖拽同级道具到另一同级道具上合成为下一级，达成目标等级或合成次数即胜利。拖动手感 + 升级爽感是卖点，前 5 秒必须让玩家完成第一次合成
+    best_for: 家装/餐厅/农场等"装扮升级"题材，欧美休闲女向盘表现最稳
+    funnel: 吸引(看引导手拖第一个)->上手(连合两次)->冲刺(倒计时内冲到目标等级)
+    avg_play_seconds: 22
+    ipm: 38
+    core_params:
+      target_level: { type: int, default: 4, desc: 目标合成等级 }
+      max_level: { type: int, default: 5, desc: 道具等级上限 }
+      total: { type: int, default: 5, desc: 通关所需合成次数 }
+
+  - name: stack_build
+    display_name: 点击叠塔
+    tags: [叠塔, 时机点击, 反应, stack, 休闲, 单手]
+    description: 滑块左右往复移动，点击使其落下叠放，按对齐精度判定；叠到目标层数即胜利，错位失败 3 次判负。单指零教学，节奏感是全部
+    best_for: 通勤碎片场景、泛人群素材测试；美术成本最低的模板
+    funnel: 吸引(看滑块来回)->上手(点对一次)->冲刺(连击叠满)
+    avg_play_seconds: 18
+    ipm: 31
+    core_params:
+      total: { type: int, default: 6, desc: 通关所需层数 }
+      speed: { type: float, default: 2.2, desc: 滑块移动速度 }
+      tolerance: { type: int, default: 26, desc: 对齐容差（px） }
+
+  - name: sort_puzzle
+    display_name: 颜色分拣
+    tags: [分拣, 分类, 益智, sort, 解谜, 拖拽]
+    description: 将混放的物品按类别拖入对应区域，全部归类正确即胜利。益智感强但节奏偏慢，适合作为复合玩法的中段
+    best_for: 收纳/整理题材，东南亚盘益智向素材
+    funnel: 吸引(看引导分第一个)->上手(连分两个)->冲刺(限时清台)
+    avg_play_seconds: 25
+    ipm: 24
+    core_params:
+      total: { type: int, default: 6, desc: 待分拣物品数 }
+
+  - name: tomb_explore
+    display_name: 古墓探测寻宝
+    tags: [古墓, 探测, 寻宝, 挖掘, 探险, 宝箱, 僵尸, 金币, tomb, treasure, 透视]
+    description: 拖动金属探测仪在古墓砖墙上扫描，靠近埋藏物时探测仪亮灯加速并响起雷达音，透视圈内能瞥见墙下宝藏，点击格子挖掘；集齐 3 只宝箱即胜利，挖到僵尸直接判负。透视 + 叮叮声构成强悬念反馈
+    best_for: 探险/盗墓/寻宝题材，前 3 秒留存最强的模板；与金币计数器、任务横幅配套使用
+    funnel: 吸引(探测仪扫到宝物亮灯)->上手(挖开第一件宝藏)->冲刺(限时内集齐三箱)
+    avg_play_seconds: 26
+    ipm: 41
+    asset_bundle: tomb          # 对应 assets 段落里 bundle=tomb 的一组美术资源
+    core_params:
+      grid_cols: { type: int, default: 4, desc: 墓墙格阵列数 }
+      grid_rows: { type: int, default: 4, desc: 墓墙格行数 }
+      chest_target: { type: int, default: 3, desc: 通关所需宝箱数 }
+      zombie_count: { type: int, default: 2, desc: 埋雷（僵尸）数量，挖到即判负 }
+      reveal_radius: { type: int, default: 90, desc: 探测仪透视半径（px） }
+
+  - name: balloon_rescue
+    display_name: 热气球救援
+    tags: [热气球, 气球, 救援, 美女, 下落, 拆螺丝, 修复, 高空, balloon, rescue, screw]
+    description: 角色乘热气球高空下落，三处破损逐处修复——每处先二选一道具，再切入拆螺丝物理解谜（点螺丝拔出、点空孔放置、铁板拔光自由下落），清关后燃烧溶解转场修复；全局倒计时结束即坠落判负。拆螺丝与古墓关卡共用 Matter.js 引擎，关卡纯数据配置
+    best_for: 救援/高空/轻悬疑题材；「倒计时 + 高度进度条」双压力结构对泛人群 CTR 最稳
+    funnel: 吸引(角色风中摇晃+点气球)->上手(选道具拔第一颗螺丝)->冲刺(倒计时内修完三处)
+    avg_play_seconds: 28
+    ipm: 39
+    asset_bundle: balloon       # 对应 assets 段落里 bundle=balloon 的一组美术资源
+    core_params:
+      countdown_seconds: { type: int, default: 30, desc: 全局倒计时（秒），三处修复共用，归零判负 }
+
+# ---------------------------------------------------------
+# 美术资产：已制作好的关卡素材，渲染时内联为 data URI。
+# file 相对 components/assets/ 目录；占位图为空 file 时用色块代替。
+# ---------------------------------------------------------
+assets:
+  - name: bg_tomb
+    display_name: 古墓砖墙底图
+    file: bg_tomb.jpg
+    bundle: tomb
+    kind: background
+    tags: [古墓, 砖墙, 背景, 氛围]
+    usage: 玩法层全屏底图，上面再铺遮挡层；色调偏暗是为了让透视圈里的宝藏更跳
+
+  - name: cover_tomb
+    display_name: 石板遮挡层
+    file: cover_tomb.png
+    bundle: tomb
+    kind: overlay
+    tags: [石板, 遮挡, 格子, 古墓]
+    usage: 盖在宝物层之上的石板墙，CSS mask 按探测仪位置实时挖洞透视；格子分割线方便玩家定位
+
+  - name: detector
+    display_name: 金属探测仪
+    file: detector.png
+    bundle: tomb
+    kind: sprite
+    tags: [探测仪, 金属探测, 拖拽, 工具]
+    usage: 玩家拖拽的主角；靠近宝藏时头部线圈亮灯并旋转加速
+
+  - name: chest_wood
+    display_name: 木宝箱
+    file: chest_wood.png
+    bundle: tomb
+    kind: sprite
+    tags: [宝箱, 木头, 战利品]
+    usage: 一级战利品，挖到 +50 金币
+
+  - name: chest_iron
+    display_name: 铁宝箱
+    file: chest_iron.png
+    bundle: tomb
+    kind: sprite
+    tags: [宝箱, 铁, 战利品]
+    usage: 二级战利品，挖到 +80 金币
+
+  - name: chest_gold
+    display_name: 金宝箱
+    file: chest_gold.png
+    bundle: tomb
+    kind: sprite
+    tags: [宝箱, 黄金, 战利品, 稀有]
+    usage: 三级战利品，挖到 +150 金币并触发满屏金光
+
+  - name: relic_jewel
+    display_name: 宝石吊坠
+    file: relic_jewel.png
+    bundle: tomb
+    kind: sprite
+    tags: [宝石, 珠宝, 奖励]
+    usage: 填充格子的普通宝藏，+30 金币
+
+  - name: relic_vase
+    display_name: 青花瓷瓶
+    file: relic_vase.png
+    bundle: tomb
+    kind: sprite
+    tags: [青花瓷, 文物, 奖励]
+    usage: 填充格子的普通宝藏，+30 金币
+
+  - name: junk_shoe
+    display_name: 破鞋
+    file: junk_shoe.png
+    bundle: tomb
+    kind: sprite
+    tags: [垃圾, 臭鞋, 恶搞, 惩罚]
+    usage: 挖到不加钱，飘"就这点东西？"吐槽文案，制造笑点调节节奏
+
+  - name: zombie
+    display_name: 古墓僵尸
+    file: zombie.png
+    bundle: tomb
+    kind: sprite
+    tags: [僵尸, 怪物, 失败, 惊吓]
+    usage: 埋雷单位，挖到立即判负；出土瞬间僵尸放大扑屏 + 震屏
+
+  - name: coin
+    display_name: 金币
+    file: coin.png
+    bundle: tomb
+    kind: sprite
+    tags: [金币, 货币, 奖励]
+    usage: 挖宝时的飞行动效主角，从出土位飞到金币计数器
+
+# ---------------------------------------------------------
+# 热气球救援 bundle：从真实投放的《热气球美女》APL 包提取
+# （tools/extract_balloon_assets.py 抓取 → build_balloon_assets.py 压缩）。
+# 文件相对 components/assets/balloon/ 目录。
+# ---------------------------------------------------------
+  - name: bg_sky
+    display_name: 高空天空背景
+    file: balloon/bg_sky.jpg
+    bundle: balloon
+    kind: background
+    tags: [天空, 高空, 背景, 蓝色]
+    usage: 主舞台全屏底图，cover 居中；修复第一处后切换为 bg_cloudy 制造"穿出云层"的高度感
+
+  - name: bg_cloudy
+    display_name: 云层背景
+    file: balloon/bg_cloudy.jpg
+    bundle: balloon
+    kind: background
+    tags: [云层, 风暴, 背景, 转场]
+    usage: 燃烧溶解转场后的替换背景，配合高度表营造持续下落的压迫感
+
+  - name: character
+    display_name: 热气球下落角色
+    file: balloon/character.png
+    bundle: balloon
+    kind: sprite
+    tags: [角色, 热气球, 下落, 主角]
+    usage: 舞台中央主角，CSS 多重正弦 windFloat 动画模拟风中摇晃；修复完成时加金色光环
+
+  - name: feather
+    display_name: 羽毛道具
+    file: balloon/feather.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 羽毛, 修复]
+    usage: 第一阶段二选一道具之一
+
+  - name: finger
+    display_name: 指套道具
+    file: balloon/finger.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 指套, 修复]
+    usage: 第一阶段二选一道具之一
+
+  - name: tape
+    display_name: 胶带道具
+    file: balloon/tape.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 胶带, 修复]
+    usage: 第二阶段二选一道具之一
+
+  - name: rag
+    display_name: 破布道具
+    file: balloon/rag.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 破布, 修复]
+    usage: 第二阶段二选一道具之一
+
+  - name: schoolbag
+    display_name: 书包道具
+    file: balloon/schoolbag.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 书包, 修复]
+    usage: 第三阶段二选一道具之一
+
+  - name: sandbag
+    display_name: 沙袋道具
+    file: balloon/sandbag.png
+    bundle: balloon
+    kind: sprite
+    tags: [道具, 沙袋, 修复]
+    usage: 第三阶段二选一道具之一
+
+  - name: background1
+    display_name: 拆螺丝关卡一背景
+    file: balloon/background1.png
+    bundle: balloon
+    kind: background
+    tags: [拆螺丝, 关卡背景, 木板]
+    usage: 第一关拆螺丝画布底图
+
+  - name: background2
+    display_name: 拆螺丝关卡二背景
+    file: balloon/background2.png
+    bundle: balloon
+    kind: background
+    tags: [拆螺丝, 关卡背景, 金属]
+    usage: 第二关拆螺丝画布底图
+
+  - name: background3
+    display_name: 拆螺丝关卡三背景
+    file: balloon/background3.png
+    bundle: balloon
+    kind: background
+    tags: [拆螺丝, 关卡背景, 混合]
+    usage: 第三关拆螺丝画布底图
+
+  - name: bannerwin
+    display_name: 胜利横幅
+    file: balloon/bannerwin.png
+    bundle: balloon
+    kind: sprite
+    tags: [结算, 胜利, 横幅]
+    usage: 结算页胜利横幅图（当前骨架结算用文字，此图留作换肤接口）
+
+  - name: bannerfail
+    display_name: 失败横幅
+    file: balloon/bannerfail.png
+    bundle: balloon
+    kind: sprite
+    tags: [结算, 失败, 横幅]
+    usage: 结算页失败横幅图（留作换肤接口）

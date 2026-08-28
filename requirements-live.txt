@@ -1,0 +1,2 @@
+# 仅在 --live 模式安装；mock/CI 不需要 API SDK。
+openai>=1.0.0

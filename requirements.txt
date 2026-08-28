@@ -1,0 +1,3 @@
+# Core dependencies: mock/CI stays offline.
+langgraph>=0.2.0
+pyyaml>=6.0

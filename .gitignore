@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# Generated delivery artifacts and proprietary media
+outputs/*
+!outputs/.gitkeep
+qa_shots/
+*.mp3
+*.mp4
+*.mov
+*.html
+components/assets/
+components/*_assets.py
+components/physics_lib.py
+_tomb_b64/
+skin/
+GG渠道/
+
+# Local OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
