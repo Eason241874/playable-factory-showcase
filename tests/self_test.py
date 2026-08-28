@@ -65,6 +65,7 @@ check("RAG score 有序", all(
 check("codegen 产出单文件 HTML", len(merge_state["html"]) > 3000)
 check("无模板占位符残留", not re.search(r"\{\{[^}]+\}\}", merge_state["html"]))
 check("包含 CTA 埋点", "track('click_cta')" in merge_state["html"])
+check("默认 demo 内嵌真实素材包", "merge_item_lv0" in merge_state["html"] and "data:image/png;base64" in merge_state["html"])
 check("QA 阻断项通过", merge_state["qa_report"]["passed"], str(merge_state["qa_report"]["fails"]))
 
 with tempfile.TemporaryDirectory() as temp_dir:

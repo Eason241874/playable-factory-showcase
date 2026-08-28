@@ -21,8 +21,8 @@ brief
 
 ## Reliability boundaries
 
-- The LLM is an adapter, not the orchestrator. A mock client and a live OpenAI-compatible client share the same node contract.
-- The RAG index falls back to a stable local hash embedding when an embedding API is unavailable.
+- The model client is an adapter, not the orchestrator. Mock and live clients share the same node contract.
+- The retrieval index falls back to a stable local hash embedding when a remote embedding service is unavailable.
 - QA uses explicit Python predicates. There is no `eval` over generated or model-provided text.
 - A generated artifact is not considered delivered until the HTML audit passes.
 

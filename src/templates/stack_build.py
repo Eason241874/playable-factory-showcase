@@ -46,6 +46,16 @@ var PALETTE = [
   { top: '#4facfe', bot: '#00f2fe', glow: '#4facfe' },
   { top: '#a8edea', bot: '#fed6e3', glow: '#a8edea' },
 ];
+var STACK_SPRITES = [];
+for (var si = 0; si < 5; si++) {
+  (function(i){
+    var src = App.assets.get('merge_item_lv' + i);
+    if (!src) return;
+    var img = new Image();
+    img.onload = function(){ STACK_SPRITES[i] = img; };
+    img.src = src;
+  })(si);
+}
 
 var BLOCK_W = 180, BLOCK_H = 42, GAP = 4;
 var tower = [];  // [{x, w, perfect}]
@@ -64,31 +74,34 @@ function drawBlock(x, y, w, perfect, alpha){
 
   var idx = tower.length % PALETTE.length;
   var c = PALETTE[idx];
+  var sprite = STACK_SPRITES[idx % STACK_SPRITES.length];
 
   var r = 8;
   ctx.save();
   if (perfect) {
     ctx.shadowColor = c.glow; ctx.shadowBlur = 22;
   }
+  ctx.shadowColor = perfect ? c.glow : 'rgba(0,0,0,.28)';
+  ctx.shadowBlur = perfect ? 22 : 10;
+  ctx.shadowOffsetY = perfect ? 0 : 5;
 
-  var grad = ctx.createLinearGradient(x, y, x, y + BLOCK_H);
-  grad.addColorStop(0, c.top); grad.addColorStop(1, c.bot);
-  ctx.fillStyle = grad;
-
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + BLOCK_H - r);
-  ctx.quadraticCurveTo(x + w, y + BLOCK_H, x + w - r, y + BLOCK_H);
-  ctx.lineTo(x + r, y + BLOCK_H);
-  ctx.quadraticCurveTo(x, y + BLOCK_H, x, y + BLOCK_H - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-  ctx.fill();
+  if (sprite && sprite.complete) {
+    var tile = BLOCK_H * 1.35;
+    var count = Math.ceil(w / tile);
+    for (var i = 0; i < count; i++) {
+      var dx = x + i * tile;
+      ctx.drawImage(sprite, dx, y - BLOCK_H * .42, tile, tile);
+    }
+  } else {
+    var grad = ctx.createLinearGradient(x, y, x, y + BLOCK_H);
+    grad.addColorStop(0, c.top); grad.addColorStop(1, c.bot);
+    ctx.fillStyle = grad;
+    roundRect(x, y, w, BLOCK_H, r);
+    ctx.fill();
+  }
 
   ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5;
+  roundRect(x, y, w, BLOCK_H, r);
   ctx.stroke();
   ctx.restore();
   ctx.globalAlpha = 1;

@@ -48,58 +48,51 @@ var LV_COLORS = [
   ['#84fab0','#8fd3f4'], ['#fccb90','#d57eeb'], ['#f093fb','#f5576c'],
   ['#4facfe','#00f2fe'], ['#ffe259','#ffa751']
 ];
+var SPRITES = [];
+for (var si = 0; si < 5; si++) {
+  (function(i){
+    var src = App.assets.get('merge_item_lv' + i);
+    if (!src) return;
+    var img = new Image();
+    img.onload = function(){ SPRITES[i] = img; };
+    img.src = src;
+  })(si);
+}
 
 function drawRoundedSprite(x, y, w, h, lv, scale){
   scale = scale || 1;
   var sw = w * scale, sh = h * scale;
   var sx = x + (w - sw) / 2, sy = y + (h - sh) / 2;
   var r = Math.min(sw, sh) * 0.18;
+  var sprite = SPRITES[Math.min(lv, SPRITES.length - 1)];
 
-  // 投影
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
-
-  // 渐变填充
-  var gc = LV_COLORS[Math.min(lv, LV_COLORS.length - 1)];
-  var grad = ctx.createLinearGradient(sx, sy, sx, sy + sh);
-  grad.addColorStop(0, gc[0]); grad.addColorStop(1, gc[1]);
-  ctx.fillStyle = grad;
-
-  ctx.beginPath();
-  ctx.moveTo(sx + r, sy);
-  ctx.lineTo(sx + sw - r, sy);
-  ctx.quadraticCurveTo(sx + sw, sy, sx + sw, sy + r);
-  ctx.lineTo(sx + sw, sy + sh - r);
-  ctx.quadraticCurveTo(sx + sw, sy + sh, sx + sw - r, sy + sh);
-  ctx.lineTo(sx + r, sy + sh);
-  ctx.quadraticCurveTo(sx, sy + sh, sx, sy + sh - r);
-  ctx.lineTo(sx, sy + r);
-  ctx.quadraticCurveTo(sx, sy, sx + r, sy);
-  ctx.closePath();
-  ctx.fill();
+  ctx.shadowColor = 'rgba(0,0,0,.34)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 7;
+  if (sprite && sprite.complete) {
+    ctx.drawImage(sprite, sx, sy, sw, sh);
+  } else {
+    var gc = LV_COLORS[Math.min(lv, LV_COLORS.length - 1)];
+    var grad = ctx.createLinearGradient(sx, sy, sx, sy + sh);
+    grad.addColorStop(0, gc[0]); grad.addColorStop(1, gc[1]);
+    ctx.fillStyle = grad;
+    roundRect(sx, sy, sw, sh, r);
+    ctx.fill();
+  }
   ctx.restore();
-
-  // 白色内边框
-  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2;
-  ctx.stroke();
 
   // 等级数字
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  var fs = Math.max(18, sw * 0.23);
+  var fs = Math.max(18, sw * 0.25);
   ctx.font = '800 ' + fs + 'px -apple-system,sans-serif';
-  ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 4;
-  ctx.fillText('Lv.' + lv, sx + sw / 2, sy + sh / 2 - fs * 0.28);
+  ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 6;
+  ctx.fillText('Lv.' + lv, sx + sw / 2, sy + sh + fs * .15);
   ctx.shadowBlur = 0;
-
-  // emoji icon（小）
-  ctx.font = Math.max(16, sw * 0.22) + 'px sans-serif';
-  ctx.fillText(EMOJIS[Math.min(lv, EMOJIS.length - 1)] || '📦', sx + sw / 2, sy + sh / 2 + fs * 0.36);
 }
 
 // =====================================================================
 // 物品系统
 // =====================================================================
-var ITEM_W = 82, ITEM_H = 82;
+var ITEM_W = 72, ITEM_H = 72;
 var items = [];
 var dragging = null, dragX = 0, dragY = 0;
 var particles = [];
@@ -118,7 +111,7 @@ function spawn(lv, n){
       x: slot[0] - ITEM_W / 2,
       y: slot[1] - ITEM_H / 2,
       w: ITEM_W, h: ITEM_H,
-      lv: lv, scale: 1, scaleTween: 0,
+      lv: lv, pop: 0,
       anim: 1  // 入场动画计时
     });
   }
@@ -169,8 +162,8 @@ function merge(a, b){
 
   if (lv >= TARGET_LV || App.state.cleared >= TOTAL) {
     // 生成目标道具并胜利
-    var winItem = { x: cx, y: cy, w: ITEM_W * 1.3, h: ITEM_H * 1.3,
-                    lv: Math.min(lv, App.cfg.max_level || 5), scale: 1.5, scaleTween: 8, anim: 1 };
+    var winItem = { x: cx, y: cy, w: ITEM_W * 1.25, h: ITEM_H * 1.25,
+                    lv: Math.min(lv, App.cfg.max_level || 5), pop: 0.18, anim: 1 };
     items.push(winItem);
     var mySeq = App.nextSeq();
     setTimeout(function(){
@@ -182,7 +175,7 @@ function merge(a, b){
   }
 
   // 生成新等级物品（入场动画）
-  var ni = { x: cx, y: cy, w: ITEM_W, h: ITEM_H, lv: lv, scale: 1.3, scaleTween: 0.3, anim: 1 };
+  var ni = { x: cx, y: cy, w: ITEM_W, h: ITEM_H, lv: lv, pop: 0.14, anim: 1 };
   items.push(ni);
 
   // 补货：保证场上始终有可合成对
@@ -211,7 +204,7 @@ cv.addEventListener('pointerdown', function(e){
       dragging = o;
       dragX = p.x - o.x;
       dragY = p.y - o.y;
-      o.scaleTween = 0.05;
+      o.pop = 0.08;
       App.sound.click();
       break;
     }
@@ -229,7 +222,7 @@ cv.addEventListener('pointerup', function(e){
   if (!dragging) return;
   var p = canvasPos(e);
   var t = findTarget(p.x, p.y, dragging);
-  dragging.scaleTween = -0.05;  // 缩放回弹
+  dragging.pop = 0;
   if (t) {
     merge(dragging, t);
   }
@@ -249,7 +242,7 @@ function draw(){
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, DW, DH);
 
-  // 背景：产品化 demo 场景，而不是纯渐变占位
+  // 背景：产品化 demo 场景
   var bgGrad = ctx.createLinearGradient(0, 0, DW, DH);
   bgGrad.addColorStop(0, '#18243a'); bgGrad.addColorStop(0.52, '#24324d'); bgGrad.addColorStop(1, '#0d111c');
   ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, DW, DH);
@@ -296,15 +289,14 @@ function draw(){
 
   // 绘制所有物品
   items.forEach(function(o){
-    // 入场/缩放动画
-    if (o.anim > 0) { o.anim = Math.max(0, o.anim - 0.06); o.scaleTween = o.anim * 0.4; }
-    if (Math.abs(o.scaleTween) > 0.001) {
-      o.scale += o.scaleTween;
-      o.scaleTween *= 0.82;
-      if (Math.abs(o.scaleTween) < 0.002) { o.scale = 1; o.scaleTween = 0; }
+    // 入场/点击缩放动画：不累加到对象尺寸，避免截图中素材失控放大
+    if (o.anim > 0) o.anim = Math.max(0, o.anim - 0.05);
+    if (o.pop) {
+      o.pop *= 0.82;
+      if (Math.abs(o.pop) < 0.002) o.pop = 0;
     }
-
-    var s = o.scale || 1;
+    var intro = o.anim > 0 ? Math.sin((1 - o.anim) * Math.PI) * 0.08 : 0;
+    var s = 1 + intro + (o.pop || 0);
     var alpha = o === dragging ? 0.8 : 1;
 
     ctx.globalAlpha = alpha;

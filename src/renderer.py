@@ -16,6 +16,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from components import snippets
+from src.demo_asset_pack import load_demo_assets
 from src.rag import LIB_PATH, load_library
 
 DEFAULT_THEME = {
@@ -825,7 +826,8 @@ def render(state) -> str:
     theme.update(spec.get("theme") or {})
     mechanic = plan["mechanic"]
 
-    asset_uris: Dict[str, str] = AssetRegistry.uris_by_mechanic(mechanic)
+    asset_uris: Dict[str, str] = load_demo_assets()
+    asset_uris.update(AssetRegistry.uris_by_mechanic(mechanic))
     mapping_physics = ""
     if mechanic in ("tomb_explore", "balloon_rescue"):
         if mechanic == "tomb_explore" and not spec.get("theme_bg"):

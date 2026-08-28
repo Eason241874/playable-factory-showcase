@@ -1,10 +1,19 @@
 # Playable Factory
 
-一个面向试玩广告（Playable Ads）的多 Agent 生产管线：把策划 brief 转成可运行的单文件 H5，并在交付前完成规则化 QA。
+从玩法 brief 到单文件 H5 的试玩广告生产管线。它把玩法规划、组件复用、素材装配、QA 检查和换皮回嵌放进同一条可复现流程，适合用来展示 Playable Ads 的工程化制作能力。
 
-> Portfolio showcase：这个仓库展示需求解析、玩法规划、RAG 组件召回、代码装配、自动修复、人工审核和交付质量门禁。原项目中的渠道成品、音视频和投放素材包没有放入公开仓库。
+> 公开仓库只保留可展示的 demo、流程代码、测试和截图；实际渠道成品、音视频和投放素材包未放入仓库。Demo 美术使用 Kenney CC0 素材，来源见 [docs/asset_sources.md](docs/asset_sources.md)。
 
-## What this demonstrates
+## Screenshots
+
+Screenshots below are captured from generated H5 files in local mock mode.
+
+| Drag Merge | Stack Build |
+| --- | --- |
+| ![Drag merge start](docs/screenshots/drag_merge_start.png) | ![Stack build start](docs/screenshots/stack_build_start.png) |
+| ![Drag merge gameplay](docs/screenshots/drag_merge_play.png) | ![Stack build gameplay](docs/screenshots/stack_build_play.png) |
+
+## Highlights
 
 ```text
 brief.txt
@@ -21,23 +30,13 @@ Parse Agent ──► Plan Agent ──► Component Agent (RAG)
                       └── fail + remaining budget ──► Codegen
 ```
 
-- LangGraph 状态图：显式状态、条件路由和 QA 回炉环。
-- 两种运行模式：默认 `mock` 离线可复现；`--live` 使用 OpenAI 兼容接口。
-- 轻量 RAG：本地稳定哈希向量召回 + 玩法亲和度/冲突规则/历史先验重排。
-- 代码生成：玩法模板、组件片段和通用投放壳装配成一个 HTML 文件。
-- 质量门禁：结构、CTA、MRAID 降级链、占位符、包体等检查，拒绝使用动态 `eval` 规则。
-- Human-in-the-Loop：QA 通过后在 `human_review` 节点暂停，人工确认后才落盘。
-- 可观测性：每个节点产生可序列化的 `trace`，记录状态、修复轮次和耗时。
-- 换皮 Agent：从内嵌 HTML 中提取、分类、按用户要求替换素材，再重新封装成单文件 H5。
-
-## Screenshots
-
-These screenshots are captured from real generated H5 outputs in mock mode.
-
-| Drag Merge | Stack Build |
-| --- | --- |
-| ![Drag merge start](docs/screenshots/drag_merge_start.png) | ![Stack build start](docs/screenshots/stack_build_start.png) |
-| ![Drag merge gameplay](docs/screenshots/drag_merge_play.png) | ![Stack build gameplay](docs/screenshots/stack_build_play.png) |
+- 状态图编排：显式状态、条件路由和 QA 回炉环，能看清每一步为什么发生。
+- 离线可复现：默认 `mock` 模式无需网络，适合面试展示、CI 和作品集截图。
+- 组件召回：本地向量召回叠加玩法亲和度、冲突规则和历史先验，避免把整库硬塞进生成阶段。
+- 单文件交付：玩法模板、公开素材包、组件片段和投放壳最终装配成一个 HTML。
+- 质量门禁：检查结构、CTA、MRAID 降级链、模板残留、包体大小和动态执行风险。
+- 人工验收：QA 通过后停在 `human_review` 节点，确认后再落盘。
+- 换皮流水线：提取内嵌素材、自动分类、生成替换计划，再把新素材回嵌成单文件 H5。
 
 ## Quick start
 
@@ -73,7 +72,7 @@ Live 模式只从环境变量读取凭据：
 
 ```powershell
 $env:LLM_API_KEY = "在当前终端临时设置，不要写入文件"
-$env:LLM_BASE_URL = "https://api.openai.com/v1"  # 也支持兼容服务
+$env:LLM_BASE_URL = "https://api.example.com/v1"
 python main.py --live --no-review --brief examples/brief_merge.txt
 ```
 
@@ -90,9 +89,11 @@ src/agents.py               # parse / plan / component / codegen / QA
 src/llm.py                  # mock/live 抽象与稳健 JSON 解析
 src/rag.py                  # 哈希向量召回、规则重排、冲突处理
 src/renderer.py             # H5 壳、模板与组件装配
+src/demo_asset_pack.py      # 公开 demo 素材包加载器
 src/templates/              # drag_merge / stack_build / balloon / tomb
 components/library.yaml     # 玩法与增强组件知识库
 components/snippets.py      # 可复用的前端组件片段
+public_assets/kenney/       # Kenney CC0 demo assets and license files
 tools/skin_swap.py          # 内嵌 data URI 素材提取/灌回工具
 tools/audit_html.py         # 独立静态交付审计器
 tests/self_test.py          # 离线节点测试 + 端到端 smoke test
