@@ -9,7 +9,7 @@ HTML = """
 """
 
 CSS = """
-#stack-canvas{display:block;width:100%;height:100%;touch-action:none}
+#stack-canvas{display:block;height:100%;width:auto;max-width:100%;aspect-ratio:750/1334;touch-action:none}
 """
 
 JS = """
@@ -97,7 +97,7 @@ function drawBlock(x, y, w, perfect, alpha){
 function draw(){
   var dpr = window.devicePixelRatio || 1;
   cv.width = DW * dpr; cv.height = DH * dpr;
-  cv.style.width = '100%'; cv.style.height = '100%';
+  cv.style.width = 'auto'; cv.style.height = '100%';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   // 相机抖动
@@ -110,17 +110,34 @@ function draw(){
 
   ctx.clearRect(0, 0, DW, DH);
 
-  // 背景：渐变天空
+  // 背景：城市夜景 + 建造台，避免看起来像空白技术 demo
   var bgG = ctx.createLinearGradient(0, 0, 0, DH);
-  bgG.addColorStop(0, '#1a1a2e'); bgG.addColorStop(0.4, '#16213e'); bgG.addColorStop(1, '#0f3460');
+  bgG.addColorStop(0, '#12263f'); bgG.addColorStop(0.46, '#172033'); bgG.addColorStop(1, '#080b10');
   ctx.fillStyle = bgG; ctx.fillRect(0, 0, DW, DH);
 
-  // 地面线
-  ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+  var halo = ctx.createRadialGradient(DW * .5, DH * .24, 10, DW * .5, DH * .24, 470);
+  halo.addColorStop(0, 'rgba(91,192,235,.24)');
+  halo.addColorStop(1, 'rgba(91,192,235,0)');
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, DW, DH);
+
+  ctx.fillStyle = 'rgba(255,255,255,.045)';
+  for (var bx = 70; bx < DW; bx += 86) {
+    var bh = 120 + (bx % 4) * 34;
+    ctx.fillRect(bx, towerBaseY() + 46 - bh, 42, bh);
+    ctx.fillStyle = 'rgba(255,220,130,.16)';
+    ctx.fillRect(bx + 10, towerBaseY() + 66 - bh, 8, 8);
+    ctx.fillStyle = 'rgba(255,255,255,.045)';
+  }
+
+  ctx.fillStyle = 'rgba(8,12,20,.56)';
+  roundRect(64, towerBaseY() + 8, DW - 128, 78, 24); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 1;
   ctx.setLineDash([4, 12]);
   ctx.beginPath();
-  ctx.moveTo(50, towerBaseY() + BLOCK_H + 20);
-  ctx.lineTo(DW - 50, towerBaseY() + BLOCK_H + 20);
+  ctx.moveTo(90, towerBaseY() + BLOCK_H + 20);
+  ctx.lineTo(DW - 90, towerBaseY() + BLOCK_H + 20);
   ctx.stroke();
   ctx.setLineDash([]);
 
@@ -135,10 +152,16 @@ function draw(){
     drawBlock(moverX, moverY(), BLOCK_W, false, 1);
   }
 
-  // 分数
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  // 标题和分数
+  ctx.fillStyle = 'rgba(235,242,255,.92)'; ctx.textAlign = 'center';
   ctx.font = '900 28px -apple-system,sans-serif';
-  ctx.fillText(tower.length + ' / ' + TOTAL, DW / 2, DH * 0.06);
+  ctx.fillText('STACK RUN', DW / 2, DH * 0.18);
+  ctx.fillStyle = 'rgba(235,242,255,.64)';
+  ctx.font = '700 14px -apple-system,sans-serif';
+  ctx.fillText('Tap when the block aligns with the tower', DW / 2, DH * 0.205);
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 30px -apple-system,sans-serif';
+  ctx.fillText(tower.length + ' / ' + TOTAL, DW / 2, DH * 0.245);
 
   // 得分 POP 文字
   if (scorePopFrames > 0) {
@@ -153,6 +176,19 @@ function draw(){
   }
 
   if (playing) requestAnimationFrame(draw);
+}
+
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 // =====================================================================

@@ -10,7 +10,7 @@ HTML = """
 """
 
 CSS = """
-#merge-canvas{display:block;width:100%;height:100%;touch-action:none}
+#merge-canvas{display:block;height:100%;width:auto;max-width:100%;aspect-ratio:750/1334;touch-action:none}
 #merge-particles{position:fixed;inset:0;pointer-events:none;z-index:50}
 .particle{position:absolute;border-radius:999px;pointer-events:none;
   animation:partFly .7s ease-out both}
@@ -99,16 +99,24 @@ function drawRoundedSprite(x, y, w, h, lv, scale){
 // =====================================================================
 // 物品系统
 // =====================================================================
-var ITEM_W = 90, ITEM_H = 90;
+var ITEM_W = 82, ITEM_H = 82;
 var items = [];
 var dragging = null, dragX = 0, dragY = 0;
 var particles = [];
+var spawnCursor = 0;
 
 function spawn(lv, n){
+  var slots = [
+    [170, 760], [375, 760], [580, 760],
+    [245, 930], [505, 930],
+    [185, 1080], [375, 1080], [565, 1080]
+  ];
   for (var i = 0; i < n; i++) {
+    var slot = slots[spawnCursor % slots.length];
+    spawnCursor++;
     items.push({
-      x: DW * 0.15 + Math.random() * DW * 0.7,
-      y: DH * 0.55 + Math.random() * DH * 0.28,
+      x: slot[0] - ITEM_W / 2,
+      y: slot[1] - ITEM_H / 2,
       w: ITEM_W, h: ITEM_H,
       lv: lv, scale: 1, scaleTween: 0,
       anim: 1  // 入场动画计时
@@ -237,38 +245,44 @@ on('layout', function(){ draw(); });
 function draw(){
   var dpr = window.devicePixelRatio || 1;
   cv.width = DW * dpr; cv.height = DH * dpr;
-  cv.style.width = '100%'; cv.style.height = '100%';
+  cv.style.width = 'auto'; cv.style.height = '100%';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, DW, DH);
 
-  // 背景
+  // 背景：产品化 demo 场景，而不是纯渐变占位
   var bgGrad = ctx.createLinearGradient(0, 0, DW, DH);
-  bgGrad.addColorStop(0, '#1a1a2e'); bgGrad.addColorStop(0.5, '#16213e'); bgGrad.addColorStop(1, '#0f3460');
+  bgGrad.addColorStop(0, '#18243a'); bgGrad.addColorStop(0.52, '#24324d'); bgGrad.addColorStop(1, '#0d111c');
   ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, DW, DH);
 
-  // 装饰性网格点
-  ctx.fillStyle = 'rgba(255,255,255,.02)';
-  for (var gx = 0; gx < DW; gx += 50) {
-    for (var gy = 0; gy < DH; gy += 50) {
-      ctx.beginPath(); ctx.arc(gx, gy, 1.5, 0, Math.PI * 2); ctx.fill();
+  var glow = ctx.createRadialGradient(DW * .5, DH * .35, 20, DW * .5, DH * .35, 520);
+  glow.addColorStop(0, 'rgba(255,220,140,.24)');
+  glow.addColorStop(1, 'rgba(255,220,140,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, DW, DH);
+
+  ctx.fillStyle = 'rgba(255,255,255,.035)';
+  for (var gx = 0; gx < DW; gx += 44) {
+    for (var gy = 0; gy < DH; gy += 44) {
+      ctx.beginPath(); ctx.arc(gx, gy, 1.2, 0, Math.PI * 2); ctx.fill();
     }
   }
+
+  ctx.fillStyle = 'rgba(8,12,20,.38)';
+  roundRect(60, DH * .48, DW - 120, DH * .36, 26); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(235,242,255,.92)';
+  ctx.font = '900 28px -apple-system,sans-serif';
+  ctx.fillText('MERGE STUDIO', DW / 2, DH * .205);
+  ctx.fillStyle = 'rgba(235,242,255,.62)';
+  ctx.font = '600 15px -apple-system,sans-serif';
+  ctx.fillText('Drag matching props to craft the premium item', DW / 2, DH * .235);
 
   // 目标卡片
   var tcX = DW / 2 - 70, tcY = DH * 0.08, tcW = 140, tcH = 110;
   ctx.fillStyle = 'rgba(255,255,255,.08)';
   ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.setLineDash([6, 4]); ctx.lineWidth = 2;
-  ctx.beginPath();
-  var rr = 16;
-  ctx.moveTo(tcX + rr, tcY); ctx.lineTo(tcX + tcW - rr, tcY);
-  ctx.quadraticCurveTo(tcX + tcW, tcY, tcX + tcW, tcY + rr);
-  ctx.lineTo(tcX + tcW, tcY + tcH - rr);
-  ctx.quadraticCurveTo(tcX + tcW, tcY + tcH, tcX + tcW - rr, tcY + tcH);
-  ctx.lineTo(tcX + rr, tcY + tcH);
-  ctx.quadraticCurveTo(tcX, tcY + tcH, tcX, tcY + tcH - rr);
-  ctx.lineTo(tcX, tcY + rr);
-  ctx.quadraticCurveTo(tcX, tcY, tcX + rr, tcY);
-  ctx.closePath();
+  roundRect(tcX, tcY, tcW, tcH, 16);
   ctx.fill(); ctx.stroke();
   ctx.setLineDash([]);
 
@@ -309,11 +323,25 @@ function draw(){
   requestAnimationFrame(draw);
 }
 
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 // =====================================================================
 // 入口
 // =====================================================================
 on('start', function(){
   App.stateMachine.go('playing');
+  spawnCursor = 0;
   spawn(0, 4); spawn(1, 2);
   draw();
 });
@@ -322,6 +350,6 @@ on('start', function(){
 (function initDraw(){
   var dpr = window.devicePixelRatio || 1;
   cv.width = DW * dpr; cv.height = DH * dpr;
-  cv.style.width = '100%'; cv.style.height = '100%';
+  cv.style.width = 'auto'; cv.style.height = '100%';
 })();
 """

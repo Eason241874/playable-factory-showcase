@@ -34,34 +34,58 @@ body{background:{{theme_bg}}}
   padding-left:env(safe-area-inset-left,0px);
   padding-right:env(safe-area-inset-right,0px);
 }
+#start-layer::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 22% 24%,rgba(96,165,250,.28),transparent 26%),
+    radial-gradient(circle at 78% 18%,rgba(251,191,36,.22),transparent 22%),
+    linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 44%);
+  pointer-events:none}
+#start-layer::after{content:"";position:absolute;left:8%;right:8%;bottom:9%;height:32%;
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.10);border-radius:26px;
+  transform:perspective(700px) rotateX(58deg);
+  box-shadow:0 42px 90px rgba(0,0,0,.35);pointer-events:none}
 #start-layer.hide,#end-layer.hide,#count-layer.hide{opacity:0;pointer-events:none}
 
 .brand-shell-top{position:absolute;top:max(12px,env(safe-area-inset-top,12px));left:max(14px,env(safe-area-inset-left,14px));z-index:11}
-.brand-logo{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:2px;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+.brand-logo{font-size:13px;font-weight:800;color:rgba(255,255,255,.72);letter-spacing:1px;
+  padding:7px 11px;border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  background:rgba(8,12,20,.34);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  text-shadow:0 1px 4px rgba(0,0,0,.4)}
 
 .start-card{
-  background:rgba(255,255,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid rgba(255,255,255,.12);border-radius:24px;
-  padding:36px 28px 30px;max-width:340px;width:82vw;
-  box-shadow:0 20px 48px rgba(0,0,0,.35);
+  position:relative;z-index:2;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.07));
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(255,255,255,.20);border-radius:20px;
+  padding:34px 30px 30px;max-width:360px;width:82vw;
+  box-shadow:0 28px 70px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18);
 }
-.start-icon{font-size:72px;margin-bottom:10px;animation:iconFloat 2.6s ease-in-out infinite}
+.start-card::before{content:"LIVE DEMO";position:absolute;top:14px;right:14px;
+  font-size:10px;font-weight:900;color:#f8d66d;letter-spacing:1px;
+  padding:4px 7px;border-radius:999px;background:rgba(248,214,109,.12);
+  border:1px solid rgba(248,214,109,.28)}
+.start-icon{display:grid;place-items:center;width:86px;height:86px;margin:0 auto 18px;
+  border-radius:22px;background:linear-gradient(145deg,#f8d66d,#f97316 56%,#f43f5e);
+  color:#151922;font-size:26px;font-weight:1000;letter-spacing:0;
+  box-shadow:0 20px 36px rgba(249,115,22,.28),inset 0 2px 0 rgba(255,255,255,.35);
+  animation:iconFloat 3s ease-in-out infinite}
 @keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
-.game-title{font-size:clamp(22px,5vw,30px);font-weight:900;color:#fff;
-  text-shadow:0 4px 18px rgba(0,0,0,.35);margin-bottom:8px;padding:0 12px}
-.game-desc{font-size:14px;color:rgba(255,255,255,.8);margin-bottom:28px;padding:0 20px;line-height:1.7}
+.game-title{font-size:clamp(24px,5vw,32px);font-weight:950;color:#fff;
+  text-shadow:0 4px 18px rgba(0,0,0,.45);margin-bottom:9px;padding:0 12px}
+.game-desc{font-size:14px;color:rgba(235,242,255,.86);margin-bottom:26px;padding:0 10px;line-height:1.7}
 
-.btn-start{display:inline-block;padding:16px 52px;font-size:20px;font-weight:800;color:#4d2500;
-  background:linear-gradient(180deg,#ffe259,#ffa751);border:none;border-radius:999px;
-  box-shadow:0 8px 0 #c7741c,0 14px 28px rgba(0,0,0,.35);cursor:pointer;
+.btn-start{display:inline-block;padding:15px 48px;font-size:18px;font-weight:900;color:#101520;
+  background:linear-gradient(180deg,#fff1a3,#f59e0b);border:none;border-radius:14px;
+  box-shadow:0 8px 0 #9a5a0d,0 18px 32px rgba(0,0,0,.35);cursor:pointer;
   animation:breath 1.2s ease-in-out infinite}
-.btn-start:active{transform:translateY(5px);box-shadow:0 3px 0 #c7741c}
+.btn-start:active{transform:translateY(5px);box-shadow:0 3px 0 #9a5a0d}
 @keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
 /* ---- 倒计时：大字居中 ---- */
 #count-layer{
-  background:rgba(10,12,30,.55);
+  background:rgba(8,12,20,.62);
   z-index:15;transition:opacity .2s;
   padding-top:env(safe-area-inset-top,0px);
 }
@@ -119,23 +143,25 @@ body{background:{{theme_bg}}}
   justify-content:space-between;align-items:center;
   padding:max(10px,env(safe-area-inset-top,10px)) max(14px,env(safe-area-inset-right,14px)) 8px max(14px,env(safe-area-inset-left,14px));
   pointer-events:none}
-#brand-shell-logo{font-size:clamp(14px,3vw,18px);font-weight:900;letter-spacing:2px;color:#fff;
-  text-shadow:0 2px 10px rgba(0,0,0,.75),0 0 20px rgba(255,210,90,.3)}
+#brand-shell-logo{font-size:clamp(13px,2.5vw,16px);font-weight:950;letter-spacing:.5px;color:#fff;
+  padding:7px 11px;border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  background:rgba(8,12,20,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  text-shadow:0 2px 10px rgba(0,0,0,.75)}
 #brand-cta-shell{pointer-events:auto;font-size:clamp(13px,2.4vw,15px);font-weight:900;letter-spacing:1px;
-  color:#23160a;background:linear-gradient(180deg,#ffe259,#ffa751);border:none;border-radius:999px;
-  padding:9px 20px;box-shadow:0 4px 0 #b0631a,0 8px 18px rgba(0,0,0,.5);cursor:pointer;
+  color:#101520;background:linear-gradient(180deg,#fff1a3,#f59e0b);border:none;border-radius:12px;
+  padding:9px 20px;box-shadow:0 4px 0 #9a5a0d,0 8px 18px rgba(0,0,0,.45);cursor:pointer;
   animation:breath 1.4s ease-in-out infinite}
-#brand-cta-shell:active{transform:translateY(3px);box-shadow:0 1px 0 #b0631a}
+#brand-cta-shell:active{transform:translateY(3px);box-shadow:0 1px 0 #9a5a0d}
 
 #cta-hotzone{position:fixed;top:0;left:0;right:0;height:max(64px,calc(env(safe-area-inset-top,0px) + 50px));z-index:40;cursor:pointer}
 
 /* ---- 横竖屏适配 ---- */
 @media (orientation:landscape){
-  .start-card{max-width:320px;padding:24px 20px 22px;border-radius:20px}
-  .start-icon{font-size:52px}
+  .start-card{max-width:340px;padding:26px 22px 22px;border-radius:18px}
+  .start-icon{width:66px;height:66px;font-size:22px;margin-bottom:12px}
   .game-title{font-size:clamp(18px,4vw,24px)}
   .game-desc{font-size:13px;margin-bottom:18px}
-  .btn-start{padding:12px 42px;font-size:17px}
+  .btn-start{padding:12px 38px;font-size:16px}
   .result-pop{max-width:320px;padding:20px 16px 18px}
   .settle-img-banner{width:min(44vw,320px)}
   .settle-img-btn{width:min(32vw,240px)}
@@ -151,18 +177,18 @@ body{background:{{theme_bg}}}
 # =========================================================================
 
 CSS = {
-    "countdown": """.countdown{position:fixed;top:max(14px,env(safe-area-inset-top,14px));right:max(16px,env(safe-area-inset-right,16px));
+    "countdown": """.countdown{position:fixed;top:max(58px,calc(env(safe-area-inset-top,0px) + 58px));right:max(16px,env(safe-area-inset-right,16px));
   z-index:35;font-size:14px;font-weight:700;color:#ffd76a;
-  background:rgba(0,0,0,.38);padding:5px 14px;border-radius:999px;
+  background:rgba(8,12,20,.58);padding:6px 14px;border-radius:999px;
   border:1px solid rgba(255,215,106,.3);display:none}
 .countdown.visible{display:block}
 .countdown.urgent{animation:cdShake .5s ease-in-out infinite;color:#ff6b5e}
 @keyframes cdShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}""",
 
-    "progress_bar": """.progress-wrap{position:fixed;top:max(14px,env(safe-area-inset-top,14px));left:max(16px,env(safe-area-inset-left,16px));
+    "progress_bar": """.progress-wrap{position:fixed;top:max(58px,calc(env(safe-area-inset-top,0px) + 58px));left:max(16px,env(safe-area-inset-left,16px));
   z-index:35;width:clamp(120px,28vw,170px)}
-.progress-label{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px;text-align:left}
-.progress{height:12px;background:rgba(0,0,0,.4);border-radius:999px;overflow:hidden;
+.progress-label{font-size:11px;color:rgba(235,242,255,.72);margin-bottom:4px;text-align:left}
+.progress{height:12px;background:rgba(8,12,20,.55);border-radius:999px;overflow:hidden;
   border:1px solid rgba(255,255,255,.2)}
 .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#7CFC9A,#2ecc71);border-radius:999px;transition:width .25s}""",
 

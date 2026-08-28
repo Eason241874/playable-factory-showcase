@@ -19,9 +19,9 @@ from components import snippets
 from src.rag import LIB_PATH, load_library
 
 DEFAULT_THEME = {
-    "theme_bg": "linear-gradient(160deg,#3a1c71,#d76d77 55%,#ffaf7b)",
+    "theme_bg": "radial-gradient(circle at 18% 12%,#364a76 0,#172033 34%,#101520 70%,#080b10 100%)",
     "product_name": "马上来玩",
-    "brand": "PlayableAd",
+    "brand": "Playable Factory",
 }
 
 TOMB_THEME_BG = "radial-gradient(120% 90% at 50% 30%,#3a2a16 0%,#241708 45%,#0f0903 100%)"
@@ -731,7 +731,7 @@ window.track = track;
 END_HTML = """
 <div class="layer" id="start-layer">
   <div class="brand-shell-top">
-    <img class="brand-logo-img" id="brand-logo-start" src="{{shared_logo}}" alt="" onerror="this.style.display='none'">
+    <span class="brand-logo">{{brand}}</span>
   </div>
   <div class="start-card">
     <div class="start-icon" id="start-icon">{{cover_emoji}}</div>
@@ -766,7 +766,7 @@ END_HTML = """
 
 <!-- 常驻品牌条：LOGO + PLAY NOW -->
 <div id="brand-shell">
-  <img id="brand-shell-logo-img" src="{{shared_logo}}" alt="" onerror="this.outerHTML='<span id=\\'brand-shell-logo\\'>{{brand}}</span>'">
+  <span id="brand-shell-logo">{{brand}}</span>
   <button id="brand-cta-shell" type="button">{{cta_text}}</button>
 </div>
 
@@ -859,7 +859,7 @@ def render(state) -> str:
     comps_css = "\n".join(snippets.CSS.get(c["name"], "") for c in comps if c["name"] in snippets.CSS)
     comps_js = "\n".join(snippets.JS.get(c["name"], "") for c in comps if c["name"] in snippets.JS)
 
-    cover_emoji = spec.get("cover_emoji", theme.get("cover_emoji", "🎮"))
+    cover_emoji = spec.get("cover_emoji", theme.get("cover_emoji", "PLAY"))
     for c in comps:
         if c.get("cover_emoji"):
             cover_emoji = c["cover_emoji"]
